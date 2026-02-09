@@ -19,6 +19,8 @@ The specific benchmark used for this procurement is the H2O-DFT-LS benchmark ava
 in the main CP2K repository on Github. This is a large system that runs a single-point
 energy calculation using linear scaling DFT.
 
+CP2K stresses both the GPU and CPU simultaneously for this benchmark case.
+
 ## Status
 
 Stable
@@ -49,7 +51,7 @@ Stable
 **Important:** All results submitted should be based on the following repository commits:
 
 - CP2K repository: [release version 2026.1 (757bb76)](https://github.com/cp2k/cp2k/releases/tag/v2026.1)
-- H2O-DFT-LS benchmark: [version from CP2K release 2026.1 (757bb76)](https://github.com/cp2k/cp2k/releases/tag/v2026.1)
+- H2O-DFT-LS benchmark: [version from this repository ()]()
 
 Any modifications made to the source code for the baseline build or the optimised build must be 
 shared as part of the offerer submission.
@@ -163,9 +165,9 @@ Example output from the running the benchmark on IsambardAI using 32 nodes
 in the "benchmark"  directory.
 
 The parameter "NREP" in the "H2O-dft-ls.inp" file *must* be set to "6" for
-submitted results. However, this parameter sets the problem size and can be
-decreased to enable testing on smaller numbers of GPU/GCD. The number of atoms
-in the model scales cubically with NREP.
+submitted results. This parameter sets the problem size and can be
+decreased to enable testing on smaller numbers of GPU/GCD if required. The
+number of atoms in the model scales cubically with NREP.
 
 **Note:** For best performance from key DBSCR routines a square number of MPI
 processes may need to be used (e.g. 64, 256, 1024).
@@ -213,7 +215,11 @@ are available in this repository:
 
 Correctness can be verified using the [validate.py](./validate.py) script,
 which compares the total energy to the expected value on computed on 
-IsambardAI (-118874.30605090 hartree).
+IsambardAI (-118874.30605090 hartree). 
+
+Note: different values of NREP in the input file will produce different
+total energies for the full system. The energy check in the validate.py
+script is onlyvalid when NREP is set to 6.
 
 For example:
 
@@ -248,9 +254,14 @@ elapsed time reported in the CP2K output file.
 
 The sample data in the table below are measured BencharkTime from the IsambardAI GPU system.
 IsambardAI's GPU nodes each have four NVIDIA GH200 superchips;
-GPU jobs used four MPI processes per node, each with one GPU and 72 cores.
-The upper rows of the table describe performance change as the problem size increases.
-Lower rows describe the strong-scaling performance of CP2K when running the reference problem (NREP 6).
+GPU jobs used 32 MPI processes per node, 8 MPI processes per GPU and 9 OpenMP CPU 
+threads per MPI process. [NVIDIA MPS](https://docs.nvidia.com/deploy/mps/index.html)  
+is used to support multiple MPI processes per node as this gives improved performance
+over a single MPI process per GPU. The upper rows of the table describe
+performance change as the problem size increases.
+The lower two rows show the performance of the benchmark problem size (NREP 6) for
+two different GPU counts CP2K. The final row corresponds to the reference configuration
+that must be matched by the offerer.
 
 | Size      | # Atoms | # GH200  | # MPI per GPU | # MPI | BenchmarkTime (s) |
 | ----      | ------: | -------: | ------------: | ----: | ----------------: |
@@ -265,7 +276,7 @@ Lower rows describe the strong-scaling performance of CP2K when running the refe
 
 The reference time was determined
 by running the reference problem on 128 IsambardAI GH200 (32 GPU nodes)
-with 8 MPI processes per GPU
+with 8 MPI processes per GPU and 9 OpenMP CPU threads per MPI process.
 and is marked by a *.
 The projected BenchmarkTime for the target problem on the target system
 must not exceed this value.
